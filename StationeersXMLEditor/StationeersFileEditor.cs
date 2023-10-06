@@ -48,6 +48,7 @@ public class StationeersFileEditor
 
 	public void LogFileChange(string change)
 	{
+		if (openFile == "advancedfurnace" || openFile == "furnace")
 		Console.WriteLine($@"Made changes to {openFile}: {change}");
 	}
 }

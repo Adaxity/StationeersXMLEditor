@@ -24,6 +24,9 @@ csharp_style_prefer_null_check_over_type_check = true:suggestion
 csharp_prefer_simple_default_expression = true:suggestion
 csharp_style_prefer_local_over_anonymous_function = true:suggestion
 
+# CS8604: Possible null reference argument.
+dotnet_diagnostic.CS8604.severity = silent
+
 [*.{cs,vb}]
 #### Naming styles ####
 

@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Diagnostics;
+using System.Globalization;
 using System.Xml;
 
 internal class Program
@@ -64,7 +65,7 @@ internal class Program
 				foreach (XmlNode node in editor.selectedNodes)
 				{
 					float value = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
-					value /= 2f;
+					value /= 10f;
 					//if (value < 0.5f) value = 0.5f;
 					//if (value > 0.5f && value < 1f) value = 1f;
 					node.InnerText = value.ToString(CultureInfo.InvariantCulture);
@@ -86,24 +87,29 @@ internal class Program
 				{
 					string parentName = node.ParentNode.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
 					string tempOrPress = node.ParentNode.Name;
-					if (tempOrPress == "Temperature")
+					string startOrStop = node.Name;
+
+					float value = 0f;
+
+					Console.WriteLine($"current is {tempOrPress} {startOrStop}");
+					if (startOrStop == "Start")
 					{
-						float start = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
-						start /= 2f;
-						node.InnerText = start.ToString(CultureInfo.InvariantCulture);
-						editor.LogFileChange($"Reduced required start {tempOrPress} of {parentName} to {start}");
+						value = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
+						value /= 2f;
+						node.InnerText = value.ToString(CultureInfo.InvariantCulture);
 					}
-					else if (tempOrPress == "Pressure ")
+					else if (startOrStop == "Stop")
 					{
-						float stop = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
-						stop += stop / 2f;
-						if (stop > 99999f)
+						value = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
+						value += value / 2f;
+						if (value > 99999f)
 						{
-							stop = 99999f;
+							value = 99999f;
 						}
-						node.InnerText = stop.ToString(CultureInfo.InvariantCulture);
-						editor.LogFileChange($"Increased ceiling {tempOrPress} of {parentName} to {stop}");
+						node.InnerText = value.ToString(CultureInfo.InvariantCulture);
 					}
+					editor.LogFileChange($"Changed {startOrStop} {tempOrPress} of {parentName} to {value}");
+
 				}
 			}
 
@@ -154,7 +160,9 @@ internal class Program
 				editor.selectedNodes = editor.xmlDoc.SelectNodes("//MineableData/*[self::MaxDropQuantity or self::MinDropQuantity]");
 				foreach (XmlNode node in editor.selectedNodes)
 				{
-					node.InnerText = "100";
+					float amount = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
+					amount *= 20f;
+					node.InnerText = amount.ToString(CultureInfo.InvariantCulture);
 
 					string parentName = node.ParentNode.SelectSingleNode("DisplayName").InnerText;
 					editor.LogFileChange($"Set mined amount of {parentName} to 100");
