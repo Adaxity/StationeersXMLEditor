@@ -2,7 +2,8 @@
 
 public class StationeersFileEditor
 {
-	private const string defaultStationeersDir = @"C:\Program Files (x86)\Steam\steamapps\common\Stationeers";
+	public const string defaultDir = @"C:\Program Files (x86)\Steam\steamapps\common\Stationeers";
+	public const string dataDir = @$"\rocketstation_Data\StreamingAssets\Data";
 
 	public string gameDir;
 	public readonly string FileSourceDir;
@@ -26,10 +27,10 @@ public class StationeersFileEditor
 		}
 	}
 
-	public StationeersFileEditor(string gamedir = defaultStationeersDir)
+	public StationeersFileEditor(string gamedir = defaultDir)
 	{
 		gameDir = gamedir;
-		FileSourceDir = @$"{gameDir}\rocketstation_Data\StreamingAssets\Data";
+		FileSourceDir = @$"{gameDir}{dataDir}";
 		FileDestinationDir = FileSourceDir;
 	}
 

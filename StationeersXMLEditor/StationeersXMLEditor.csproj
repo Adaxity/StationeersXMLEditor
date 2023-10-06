@@ -1,14 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<Configurations>Debug;Release;Deploy</Configurations>
+		<Platforms>AnyCPU;x86</Platforms>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <None Include="..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
+	<ItemGroup>
+		<Compile Remove="AssemblyInfo.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ApplicationDefinition Include="AssemblyInfo.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <PackageReference Include="ilmerge" Version="3.0.41" />
+	</ItemGroup>
 
 </Project>

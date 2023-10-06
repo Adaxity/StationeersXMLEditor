@@ -3,11 +3,31 @@ using System.Xml;
 
 internal class Program
 {
-	public static string gameDir = @"D:\SteamLibrary\steamapps\common\Stationeers";
-
-	private static void Main()
+	private static void Main(string[]? args)
 	{
-		StationeersFileEditor editor = new StationeersFileEditor(gameDir);
+		string? gameDir = string.Empty;
+		string[]? passedArgs = new string[1];
+
+		if (args.Length == 0)
+			passedArgs[0] = string.Empty;
+		else
+			passedArgs[0] = args[0].Trim();
+
+		if (Directory.Exists($@"{passedArgs[0]}{StationeersFileEditor.dataDir}"))
+			gameDir = passedArgs[0];
+		else if (Directory.Exists($@"{StationeersFileEditor.defaultDir}{StationeersFileEditor.dataDir}"))
+			Console.WriteLine($"\nNo arguments were passed, but Stationeers was found in {StationeersFileEditor.defaultDir}");
+		else
+			Console.WriteLine("Couldn't automatically find Stationeers folder.");
+			while (!Directory.Exists($@"{gameDir}{StationeersFileEditor.dataDir}"))
+				try
+				{
+					Console.WriteLine("\nPlease enter your valid Stationeers folder directory:");
+					gameDir = Console.ReadLine();
+				}
+				catch { }
+
+		StationeersFileEditor editor = new(gameDir);
 
 		foreach (string file in editor.XmlFiles)
 		{
@@ -72,7 +92,8 @@ internal class Program
 						start /= 2f;
 						node.InnerText = start.ToString(CultureInfo.InvariantCulture);
 						editor.LogFileChange($"Reduced required start {tempOrPress} of {parentName} to {start}");
-					} else if (tempOrPress == "Pressure ")
+					}
+					else if (tempOrPress == "Pressure ")
 					{
 						float stop = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
 						stop += stop / 2f;
@@ -83,7 +104,6 @@ internal class Program
 						node.InnerText = stop.ToString(CultureInfo.InvariantCulture);
 						editor.LogFileChange($"Increased ceiling {tempOrPress} of {parentName} to {stop}");
 					}
-					
 				}
 			}
 
@@ -152,7 +172,8 @@ internal class Program
 
 			editor.SaveFile();
 		}
-		Console.WriteLine("All XML Files updated successfully!\n");
+		Console.WriteLine("All XML Files updated successfully!\n\nPress any key to exit...");
+		Console.ReadKey();
 	}
 }
 
