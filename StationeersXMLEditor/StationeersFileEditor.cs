@@ -1,6 +1,5 @@
 ﻿using System.Xml;
 
-
 public class StationeersFileEditor
 {
 	private const string defaultStationeersDir = @"C:\Program Files (x86)\Steam\steamapps\common\Stationeers";
@@ -12,17 +11,22 @@ public class StationeersFileEditor
 	public XmlDocument xmlDoc = new();
 	public XmlNodeList? selectedNodes;
 
-	public string[] XmlFiles { get { return Directory.GetFiles(FileSourceDir); } }
+	public string[] XmlFiles
+	{ get { return Directory.GetFiles(FileSourceDir); } }
 
-	public string openFile = "";
-	public string[] whiteList;
+	public string? openFile = null;
+	public string[] whiteList = Array.Empty<string>();
 
-	public bool FileIsAllowed { get
+	public bool IsFileAllowed
+	{
+		get
 		{
-			return whiteList.Contains(openFile) ? true : false;
-		} }
+			if (openFile == null) throw new NullReferenceException("No file opened.");
+			return whiteList.Contains(openFile);
+		}
+	}
 
-	public StationeersFileEditor(string gamedir = defaultStationeersDir) 
+	public StationeersFileEditor(string gamedir = defaultStationeersDir)
 	{
 		gameDir = gamedir;
 		FileSourceDir = @$"{gameDir}\rocketstation_Data\StreamingAssets\Data";
@@ -37,12 +41,12 @@ public class StationeersFileEditor
 
 	public void SaveFile()
 	{
+		openFile = null;
 		xmlDoc.Save($@"{FileDestinationDir}\{openFile}.xml");
 	}
 
-	public void FileChangeReport(string change)
+	public void LogFileChange(string change)
 	{
 		Console.WriteLine($@"Made changes to {openFile}: {change}");
 	}
 }
-

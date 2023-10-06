@@ -1,11 +1,11 @@
 ﻿using System.Globalization;
 using System.Xml;
 
-class Program
+internal class Program
 {
 	public static string gameDir = @"D:\SteamLibrary\steamapps\common\Stationeers\rocketstation_Data\StreamingAssets\Data";
-	
-	static void Main()
+
+	private static void Main()
 	{
 		StationeersFileEditor editor = new StationeersFileEditor(gameDir);
 
@@ -15,14 +15,14 @@ class Program
 
 			// Assemblers changes
 			editor.whiteList = new string[] { "autolathe", "DynamicObjectsFabricator", "electronics", "fabricator", "gascanisters", "organicsprinter", "paints", "PipeBender", "rocketmanufactory", "security", "toolmanufacturer" };
-			if (editor.FileIsAllowed)
+			if (editor.IsFileAllowed)
 			{
 				// Remove all empty nodes
 				foreach (XmlNode node in editor.xmlDoc.SelectNodes("//*[text()='0']"))
 				{
 					node.ParentNode.RemoveChild(node);
 
-					editor.FileChangeReport($"Removed empty {node.Name} tag of something");
+					editor.LogFileChange($"Removed empty {node.Name} tag of something");
 				}
 
 				// Reduce crafting time
@@ -36,7 +36,7 @@ class Program
 					node.InnerText = time.ToString(CultureInfo.InvariantCulture);
 
 					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.FileChangeReport($"Reduced crafting time of {parentName} to {time}");
+					editor.LogFileChange($"Reduced crafting time of {parentName} to {time}");
 				}
 
 				// Reduce required crafting materials
@@ -50,13 +50,13 @@ class Program
 					node.InnerText = value.ToString(CultureInfo.InvariantCulture);
 
 					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.FileChangeReport($"Reduced the required {node.Name} of {parentName} to {value}");
+					editor.LogFileChange($"Reduced the required {node.Name} of {parentName} to {value}");
 				}
 			}
 
 			// Furnace and Advanced Furnace changes
 			editor.whiteList = new string[] { "furnace", "advancedfurnace" };
-			if (editor.FileIsAllowed)
+			if (editor.IsFileAllowed)
 			{
 				// Reduce required start pressure/temperature
 				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Start");
@@ -69,7 +69,7 @@ class Program
 
 					string parentName = node.ParentNode.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
 					string what = node.ParentNode.Name;
-					editor.FileChangeReport($"Reduced required start {what} of {parentName} to {start}");
+					editor.LogFileChange($"Reduced required start {what} of {parentName} to {start}");
 				}
 
 				// Increase required stop pressure/temperature
@@ -87,13 +87,13 @@ class Program
 
 					string parentName = node.ParentNode.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
 					string tempOrPress = node.ParentNode.Name;
-					editor.FileChangeReport($"Increased ceiling {tempOrPress} of {parentName} to {stop}");
+					editor.LogFileChange($"Increased ceiling {tempOrPress} of {parentName} to {stop}");
 				}
 			}
 
 			// Advanced Furnace changes
 			editor.whiteList = new string[] { "advancedfurnace" };
-			if (editor.FileIsAllowed)
+			if (editor.IsFileAllowed)
 			{
 				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Output");
 
@@ -102,13 +102,13 @@ class Program
 					node.InnerText = "1";
 
 					string parentName = node.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.FileChangeReport($"Real-ified output amount of {parentName}");
+					editor.LogFileChange($"Real-ified output amount of {parentName}");
 				}
 			}
 
 			// Arc Furnace changes
 			editor.whiteList = new string[] { "arcfurnace" };
-			if (editor.FileIsAllowed)
+			if (editor.IsFileAllowed)
 			{
 				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Time"); // Reduce smelting time
 
@@ -117,7 +117,7 @@ class Program
 					node.InnerText = "0.25";
 
 					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.FileChangeReport($"Reduced smelting time of {parentName} to 0.25");
+					editor.LogFileChange($"Reduced smelting time of {parentName} to 0.25");
 				}
 
 				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Energy"); // Reduce required energy to smelt
@@ -127,7 +127,7 @@ class Program
 					node.InnerText = "100";
 
 					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.FileChangeReport($"Reduced required energy of {parentName} to 100");
+					editor.LogFileChange($"Reduced required energy of {parentName} to 100");
 				}
 			}
 			editor.SaveFile();
@@ -135,3 +135,10 @@ class Program
 		Console.WriteLine("All XML Files updated successfully!\n");
 	}
 }
+
+/*
+public static class Files
+{
+	public const string AutoLathe = "autolathe";
+}
+*/
