@@ -3,7 +3,7 @@ using System.Xml;
 
 internal class Program
 {
-	public static string gameDir = @"D:\SteamLibrary\steamapps\common\Stationeers\rocketstation_Data\StreamingAssets\Data";
+	public static string gameDir = @"D:\SteamLibrary\steamapps\common\Stationeers";
 
 	private static void Main()
 	{
@@ -59,35 +59,31 @@ internal class Program
 			if (editor.IsFileAllowed)
 			{
 				// Reduce required start pressure/temperature
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Start");
-
-				foreach (XmlNode node in editor.selectedNodes)
-				{
-					float start = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
-					start /= 2f;
-					node.InnerText = start.ToString(CultureInfo.InvariantCulture);
-
-					string parentName = node.ParentNode.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					string what = node.ParentNode.Name;
-					editor.LogFileChange($"Reduced required start {what} of {parentName} to {start}");
-				}
-
 				// Increase required stop pressure/temperature
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Stop");
+				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Start | //Stop");
 
 				foreach (XmlNode node in editor.selectedNodes)
 				{
-					float stop = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
-					stop += stop / 2f;
-					if (stop > 99999f)
-					{
-						stop = 99999f;
-					}
-					node.InnerText = stop.ToString(CultureInfo.InvariantCulture);
-
 					string parentName = node.ParentNode.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
 					string tempOrPress = node.ParentNode.Name;
-					editor.LogFileChange($"Increased ceiling {tempOrPress} of {parentName} to {stop}");
+					if (tempOrPress == "Temperature")
+					{
+						float start = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
+						start /= 2f;
+						node.InnerText = start.ToString(CultureInfo.InvariantCulture);
+						editor.LogFileChange($"Reduced required start {tempOrPress} of {parentName} to {start}");
+					} else if (tempOrPress == "Pressure ")
+					{
+						float stop = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
+						stop += stop / 2f;
+						if (stop > 99999f)
+						{
+							stop = 99999f;
+						}
+						node.InnerText = stop.ToString(CultureInfo.InvariantCulture);
+						editor.LogFileChange($"Increased ceiling {tempOrPress} of {parentName} to {stop}");
+					}
+					
 				}
 			}
 
@@ -127,9 +123,33 @@ internal class Program
 					node.InnerText = "100";
 
 					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.LogFileChange($"Reduced required energy of {parentName} to 100");
+					editor.LogFileChange($"Reduced required required energy for smelting of {parentName} to 100");
 				}
 			}
+
+			// Mineables changes
+			editor.whiteList = new string[] { "mineables" };
+			if (editor.IsFileAllowed)
+			{
+				editor.selectedNodes = editor.xmlDoc.SelectNodes("//MineableData/*[self::MaxDropQuantity or self::MinDropQuantity]");
+				foreach (XmlNode node in editor.selectedNodes)
+				{
+					node.InnerText = "100";
+
+					string parentName = node.ParentNode.SelectSingleNode("DisplayName").InnerText;
+					editor.LogFileChange($"Set mined amount of {parentName} to 100");
+				}
+
+				editor.selectedNodes = editor.xmlDoc.SelectNodes("//MineableData[DisplayName='Geyser' or DisplayName='Uranium']/*[number(text()) = number(text())]");
+				foreach (XmlNode node in editor.selectedNodes)
+				{
+					node.InnerText = "0";
+
+					string parentName = node.ParentNode.SelectSingleNode("DisplayName").InnerText;
+					editor.LogFileChange($"Set values of {parentName} to 0");
+				}
+			}
+
 			editor.SaveFile();
 		}
 		Console.WriteLine("All XML Files updated successfully!\n");

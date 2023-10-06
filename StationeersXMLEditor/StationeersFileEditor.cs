@@ -33,16 +33,16 @@ public class StationeersFileEditor
 		FileDestinationDir = FileSourceDir;
 	}
 
-	public void LoadFile(string fileNameWithoutExtension)
+	public void LoadFile(string fileName)
 	{
-		openFile = fileNameWithoutExtension;
-		xmlDoc.Load($@"{FileDestinationDir}\{fileNameWithoutExtension}.xml");
+		openFile = Path.GetFileNameWithoutExtension(fileName); ;
+		xmlDoc.Load(fileName);
 	}
 
 	public void SaveFile()
 	{
-		openFile = null;
 		xmlDoc.Save($@"{FileDestinationDir}\{openFile}.xml");
+		openFile = null;
 	}
 
 	public void LogFileChange(string change)
