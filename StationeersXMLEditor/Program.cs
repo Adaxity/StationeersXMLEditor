@@ -17,16 +17,20 @@ internal class Program
 		if (Directory.Exists($@"{passedArgs[0]}{StationeersFileEditor.dataDir}"))
 			gameDir = passedArgs[0];
 		else if (Directory.Exists($@"{StationeersFileEditor.defaultDir}{StationeersFileEditor.dataDir}"))
+		{
 			Console.WriteLine($"\nNo arguments were passed, but Stationeers was found in {StationeersFileEditor.defaultDir}");
+			gameDir = StationeersFileEditor.defaultDir;
+		}
 		else
 			Console.WriteLine("Couldn't automatically find Stationeers folder.");
-			while (!Directory.Exists($@"{gameDir}{StationeersFileEditor.dataDir}"))
-				try
-				{
-					Console.WriteLine("\nPlease enter your valid Stationeers folder directory:");
-					gameDir = Console.ReadLine();
-				}
-				catch { }
+
+		while (!Directory.Exists($@"{gameDir}{StationeersFileEditor.dataDir}"))
+			try
+			{
+				Console.WriteLine("\nPlease enter your valid Stationeers folder directory:");
+				gameDir = Console.ReadLine();
+			}
+			catch { }
 
 		StationeersFileEditor editor = new(gameDir);
 
@@ -109,7 +113,6 @@ internal class Program
 						node.InnerText = value.ToString(CultureInfo.InvariantCulture);
 					}
 					editor.LogFileChange($"Changed {startOrStop} {tempOrPress} of {parentName} to {value}");
-
 				}
 			}
 
