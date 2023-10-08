@@ -2,13 +2,14 @@
 using System.Globalization;
 using System.Xml;
 
-internal class Program
+internal partial class Program
 {
+	private static string? gameDir = string.Empty;
+	private static StationeersFileEditor? editor;
+
 	private static void Main(string[]? args)
 	{
-		string? gameDir = string.Empty;
-		string[]? passedArgs = new string[1];
-
+		string[] passedArgs = new string[1];
 		if (args.Length == 0)
 			passedArgs[0] = string.Empty;
 		else
@@ -18,76 +19,72 @@ internal class Program
 			gameDir = passedArgs[0];
 		else if (Directory.Exists($@"{StationeersFileEditor.defaultDir}{StationeersFileEditor.dataDir}"))
 		{
-			Console.WriteLine($"\nNo arguments were passed, but Stationeers was found in {StationeersFileEditor.defaultDir}");
+			Console.WriteLine($"\nNo arguments were passed, but Stationeers was found in{StationeersFileEditor.defaultDir}");
 			gameDir = StationeersFileEditor.defaultDir;
 		}
 		else
-			Console.WriteLine("Couldn't automatically find Stationeers folder.");
+			Console.WriteLine("\nCouldn't automatically find Stationeers folder.");
 
 		while (!Directory.Exists($@"{gameDir}{StationeersFileEditor.dataDir}"))
 			try
 			{
-				Console.WriteLine("\nPlease enter your valid Stationeers folder directory:");
+				Console.WriteLine("\nPlease enter your valid Stationeers folder path:");
 				gameDir = Console.ReadLine();
 			}
 			catch { }
 
-		StationeersFileEditor editor = new(gameDir);
+		Console.WriteLine("\n");
 
-		foreach (string file in editor.XmlFiles)
+		editor = new(gameDir);
+
+		foreach (string fileName in editor.XmlFiles)
 		{
-			editor.LoadFile(file);
+			editor.Load(fileName);
 
 			// Assemblers changes
-			editor.whiteList = new string[] { "autolathe", "DynamicObjectsFabricator", "electronics", "fabricator", "gascanisters", "organicsprinter", "paints", "PipeBender", "rocketmanufactory", "security", "toolmanufacturer" };
-			if (editor.IsFileAllowed)
+			if (editor.IsWhitelisted(new[] { "autolathe", "DynamicObjectsFabricator", "electronics", "fabricator", "gascanisters", "organicsprinter", "paints", "PipeBender", "rocketmanufactory", "security", "toolmanufacturer" }))
 			{
 				// Remove all empty nodes
-				foreach (XmlNode node in editor.xmlDoc.SelectNodes("//*[text()='0']"))
+				foreach (XmlNode node in editor.SelectNodes("//*[text()='0']"))
 				{
-					node.ParentNode.RemoveChild(node);
-
-					editor.LogFileChange($"Removed empty {node.Name} tag of something");
-				}
-
-				// Reduce crafting time
-				foreach (XmlNode node in editor.xmlDoc.SelectNodes("//Time"))
-				{
-					float time = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
-					time /= 10f;
-					float min = 0.25f;
-					if (time < min) time = min;
-					if (time > min && time < 1f) time = 1f;
-					node.InnerText = time.ToString(CultureInfo.InvariantCulture);
-
 					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.LogFileChange($"Reduced crafting time of {parentName} to {time}");
+					node.ParentNode.RemoveChild(node);
+					editor.LogChange($"Removed empty {node.Name} tag of {parentName}");
 				}
 
-				// Reduce required crafting materials
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Recipe/descendant::*[not(self::Time or self::Energy)]");
-				foreach (XmlNode node in editor.selectedNodes)
+				// Change crafting values
+				foreach (XmlNode node in editor.SelectNodes("//Recipe/*"))
 				{
 					float value = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
-					value /= 10f;
-					//if (value < 0.5f) value = 0.5f;
-					//if (value > 0.5f && value < 1f) value = 1f;
-					node.InnerText = value.ToString(CultureInfo.InvariantCulture);
+					switch (node.Name)
+					{
+						case "Time":
+							float min = 0.25f;
+							value /= 10f;
+							if (value < min) value = min;
+							if (value > min && value < 1f) value = 1f;
+							break;
 
+						case "Energy":
+							value /= 2f;
+							if (value < 1) value = 1;
+							break;
+
+						default:
+							value /= 10f;
+							break;
+					}
+					node.InnerText = value.ToString(CultureInfo.InvariantCulture);
 					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.LogFileChange($"Reduced the required {node.Name} of {parentName} to {value}");
+					editor.LogChange($"Reduced the {node.Name} of {parentName} to {value}");
 				}
 			}
 
 			// Furnace and Advanced Furnace changes
-			editor.whiteList = new string[] { "furnace", "advancedfurnace" };
-			if (editor.IsFileAllowed)
+			if (editor.IsWhitelisted(new[] { "furnace", "advancedfurnace" }))
 			{
-				// Reduce required start pressure/temperature
-				// Increase required stop pressure/temperature
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Start | //Stop");
-
-				foreach (XmlNode node in editor.selectedNodes)
+				// Increase required stop pressure/temperature, reduce required start pressure/temperature
+				foreach (XmlNode node in editor.SelectNodes("//Start | //Stop"))
 				{
 					string parentName = node.ParentNode.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
 					string tempOrPress = node.ParentNode.Name;
@@ -95,7 +92,6 @@ internal class Program
 
 					float value = 0f;
 
-					Console.WriteLine($"current is {tempOrPress} {startOrStop}");
 					if (startOrStop == "Start")
 					{
 						value = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
@@ -112,78 +108,69 @@ internal class Program
 						}
 						node.InnerText = value.ToString(CultureInfo.InvariantCulture);
 					}
-					editor.LogFileChange($"Changed {startOrStop} {tempOrPress} of {parentName} to {value}");
+					editor.LogChange($"Changed {startOrStop} {tempOrPress} of {parentName} to {value}");
 				}
 			}
 
 			// Advanced Furnace changes
-			editor.whiteList = new string[] { "advancedfurnace" };
-			if (editor.IsFileAllowed)
+			if (editor.IsWhitelisted(new[] { "advancedfurnace" }))
 			{
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Output");
-
-				foreach (XmlNode node in editor.selectedNodes)
+				//Normalize output (in vanilla you get 1g of a superalloy from 4g of ores/ingots = doesn't make sense)
+				foreach (XmlNode node in editor.SelectNodes("//Output"))
 				{
 					node.InnerText = "1";
 
 					string parentName = node.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.LogFileChange($"Real-ified output amount of {parentName}");
+					editor.LogChange($"Real-ified output amount of {parentName}");
 				}
 			}
 
 			// Arc Furnace changes
-			editor.whiteList = new string[] { "arcfurnace" };
-			if (editor.IsFileAllowed)
+			if (editor.IsWhitelisted(new[] { "arcfurnace" }))
 			{
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Time"); // Reduce smelting time
-
-				foreach (XmlNode node in editor.selectedNodes)
+				// Reduce required Time and Energy for smelting
+				foreach (XmlNode node in editor.SelectNodes("//Time | //Energy"))
 				{
-					node.InnerText = "0.25";
-
+					if (node.Name == "Time")
+					{
+						node.InnerText = "0.25";
+					}
+					else if (node.Name == "Energy")
+					{
+						node.InnerText = "100";
+					}
 					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.LogFileChange($"Reduced smelting time of {parentName} to 0.25");
-				}
-
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//Energy"); // Reduce required energy to smelt
-
-				foreach (XmlNode node in editor.selectedNodes)
-				{
-					node.InnerText = "100";
-
-					string parentName = node.ParentNode.ParentNode.SelectSingleNode("PrefabName").InnerText;
-					editor.LogFileChange($"Reduced required required energy for smelting of {parentName} to 100");
+					editor.LogChange($"Reduced required {node.Name} of {parentName} to {node.InnerText}");
 				}
 			}
 
 			// Mineables changes
-			editor.whiteList = new string[] { "mineables" };
-			if (editor.IsFileAllowed)
+			if (editor.IsWhitelisted(new[] { "mineables" }))
 			{
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//MineableData/*[self::MaxDropQuantity or self::MinDropQuantity]");
-				foreach (XmlNode node in editor.selectedNodes)
+				// Change drop quantity of ores
+				foreach (XmlNode node in editor.SelectNodes("//MaxDropQuantity | //MinDropQuantity"))
 				{
 					float amount = float.Parse(node.InnerText, CultureInfo.InvariantCulture);
 					amount *= 20f;
 					node.InnerText = amount.ToString(CultureInfo.InvariantCulture);
 
 					string parentName = node.ParentNode.SelectSingleNode("DisplayName").InnerText;
-					editor.LogFileChange($"Set mined amount of {parentName} to 100");
+					editor.LogChange($"Set mined amount of {parentName} to 100");
 				}
 
-				editor.selectedNodes = editor.xmlDoc.SelectNodes("//MineableData[DisplayName='Geyser' or DisplayName='Uranium']/*[number(text()) = number(text())]");
-				foreach (XmlNode node in editor.selectedNodes)
+				// Prevent geysers and uranium from spawning
+				foreach (XmlNode node in editor.SelectNodes("//MineableData[DisplayName='Geyser' or DisplayName='Uranium']/*[number(text()) = number(text())]"))
 				{
 					node.InnerText = "0";
 
 					string parentName = node.ParentNode.SelectSingleNode("DisplayName").InnerText;
-					editor.LogFileChange($"Set values of {parentName} to 0");
+					editor.LogChange($"Set values of {parentName} to 0");
 				}
 			}
 
 			editor.SaveFile();
 		}
-		Console.WriteLine("All XML Files updated successfully!\n\nPress any key to exit...");
+		Console.WriteLine("\nAll XML Files updated successfully!\n\nPress any key to exit...");
 		Console.ReadKey();
 	}
 }

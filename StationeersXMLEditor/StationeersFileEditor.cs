@@ -10,22 +10,13 @@ public class StationeersFileEditor
 	public readonly string FileDestinationDir;
 
 	public XmlDocument xmlDoc = new();
-	public XmlNodeList? selectedNodes;
+	private XmlNodeList? selectedNodes;
 
 	public string[] XmlFiles
 	{ get { return Directory.GetFiles(FileSourceDir); } }
 
 	public string? openFile = null;
-	public string[] whiteList = Array.Empty<string>();
-
-	public bool IsFileAllowed
-	{
-		get
-		{
-			if (openFile == null) throw new NullReferenceException("No file opened.");
-			return whiteList.Contains(openFile);
-		}
-	}
+	//public string[] whiteList = Array.Empty<string>();
 
 	public StationeersFileEditor(string gamedir = defaultDir)
 	{
@@ -34,7 +25,20 @@ public class StationeersFileEditor
 		FileDestinationDir = FileSourceDir;
 	}
 
-	public void LoadFile(string fileName)
+	public bool IsWhitelisted(string[] whitelist)
+	{
+		if (openFile == null) throw new NullReferenceException("No file opened.");
+		return whitelist.Contains(openFile);
+	}
+
+	public XmlNodeList? SelectNodes(string selector)
+	{
+		XmlNodeList? nodes = xmlDoc.SelectNodes(selector);
+		selectedNodes = nodes;
+		return selectedNodes;
+	}
+
+	public void Load(string fileName)
 	{
 		openFile = Path.GetFileNameWithoutExtension(fileName); ;
 		xmlDoc.Load(fileName);
@@ -46,9 +50,9 @@ public class StationeersFileEditor
 		openFile = null;
 	}
 
-	public void LogFileChange(string change)
+	public void LogChange(string change)
 	{
-		if (openFile == "advancedfurnace" || openFile == "furnace")
-		Console.WriteLine($@"Made changes to {openFile}: {change}");
+		//if (openFile == "advancedfurnace" || openFile == "furnace")
+		Console.WriteLine($@"{openFile}: {change}");
 	}
 }
