@@ -187,10 +187,3 @@ internal class Program
 		Console.ReadKey();
 	}
 }
-
-/*
-public static class Files
-{
-	public const string AutoLathe = "autolathe";
-}
-*/
