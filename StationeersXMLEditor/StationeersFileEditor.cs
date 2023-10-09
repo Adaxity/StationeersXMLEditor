@@ -2,7 +2,6 @@
 
 public class StationeersFileEditor
 {
-	public const string defaultDir = @"C:\Program Files (x86)\Steam\steamapps\common\Stationeers";
 	public const string dataDir = @$"\rocketstation_Data\StreamingAssets\Data";
 
 	public string gameDir;
@@ -18,7 +17,7 @@ public class StationeersFileEditor
 	public string? openFile = null;
 	//public string[] whiteList = Array.Empty<string>();
 
-	public StationeersFileEditor(string gamedir = defaultDir)
+	public StationeersFileEditor(string gamedir)
 	{
 		gameDir = gamedir;
 		FileSourceDir = @$"{gameDir}{dataDir}";

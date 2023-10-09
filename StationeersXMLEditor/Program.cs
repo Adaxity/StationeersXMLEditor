@@ -1,6 +1,8 @@
 ﻿using System.Diagnostics;
 using System.Globalization;
 using System.Xml;
+using Microsoft.Win32;
+using System;
 
 internal partial class Program
 {
@@ -16,22 +18,33 @@ internal partial class Program
 			passedArgs[0] = args[0].Trim();
 
 		if (Directory.Exists($@"{passedArgs[0]}{StationeersFileEditor.dataDir}"))
-			gameDir = passedArgs[0];
-		else if (Directory.Exists($@"{StationeersFileEditor.defaultDir}{StationeersFileEditor.dataDir}"))
 		{
-			Console.WriteLine($"\nNo arguments were passed, but Stationeers was found in{StationeersFileEditor.defaultDir}");
-			gameDir = StationeersFileEditor.defaultDir;
-		}
-		else
-			Console.WriteLine("\nCouldn't automatically find Stationeers folder.");
-
-		while (!Directory.Exists($@"{gameDir}{StationeersFileEditor.dataDir}"))
-			try
+			Console.WriteLine($"\nPath argument passed, Stationeers found in {passedArgs[0]}");
+		} else
+		{
+			Console.WriteLine("No arguments passed, trying to automatically find Stationeers path...");
+			string? StationeersDirectory = FindExecutablePath("C:", "rocketstation.exe");
+			if (string.IsNullOrEmpty(StationeersDirectory))
 			{
-				Console.WriteLine("\nPlease enter your valid Stationeers folder path:");
-				gameDir = Console.ReadLine();
+				StationeersDirectory = FindExecutablePath("D:", "rocketstation.exe");
 			}
-			catch { }
+			if (Directory.Exists($@"{StationeersDirectory}{StationeersFileEditor.dataDir}")) {
+				Console.WriteLine($"\nStationeers was found automatically in {StationeersDirectory}");
+				gameDir = StationeersDirectory;
+			} else
+			{
+				Console.WriteLine("\nCouldn't automatically find Stationeers folder.");
+				while (!Directory.Exists($@"{gameDir}{StationeersFileEditor.dataDir}"))
+					try
+					{
+						Console.WriteLine("\nPlease enter your valid Stationeers folder path:");
+						gameDir = Console.ReadLine();
+					}
+					catch {
+						Console.WriteLine("\nAn error has occurred xd");
+					}
+			}
+		}
 
 		Console.WriteLine("\n");
 
