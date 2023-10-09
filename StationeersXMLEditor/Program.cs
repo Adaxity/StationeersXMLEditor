@@ -50,19 +50,19 @@ internal partial class Program
 
 		editor = new(gameDir);
 
-		foreach (string fileName in editor.XmlFiles)
+		foreach (string filePath in editor.XmlFiles)
 		{
-			editor.Load(fileName);
+			editor.Load(filePath);
 
 			if (editor.ElementExists("stationeers_edited"))
 			{
-				Console.WriteLine($"{fileName} has already been edited, skipping");
+				Console.WriteLine($"{editor.openFile} has already been edited, skipping");
 				continue;
 			} else
 			{
 				XmlElement newElement = editor.xmlDoc.CreateElement("stationeers_edited");
 				editor.xmlDoc.DocumentElement.PrependChild(newElement);
-				Console.WriteLine($"Adding <stationeers_edited> tag to {fileName}");
+				Console.WriteLine($"Adding <stationeers_edited> tag to {editor.openFile}");
 			}
 
 			// Assemblers changes
