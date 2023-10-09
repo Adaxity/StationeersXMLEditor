@@ -54,6 +54,17 @@ internal partial class Program
 		{
 			editor.Load(fileName);
 
+			if (editor.ElementExists("stationeers_edited"))
+			{
+				Console.WriteLine($"{fileName} has already been edited, skipping");
+				continue;
+			} else
+			{
+				XmlElement newElement = editor.xmlDoc.CreateElement("stationeers_edited");
+				editor.xmlDoc.DocumentElement.PrependChild(newElement);
+				Console.WriteLine($"Adding <stationeers_edited> tag to {fileName}");
+			}
+
 			// Assemblers changes
 			if (editor.IsWhitelisted(new[] { "autolathe", "DynamicObjectsFabricator", "electronics", "fabricator", "gascanisters", "organicsprinter", "paints", "PipeBender", "rocketmanufactory", "security", "toolmanufacturer" }))
 			{
@@ -180,7 +191,7 @@ internal partial class Program
 					editor.LogChange($"Set values of {parentName} to 0");
 				}
 			}
-
+			
 			editor.SaveFile();
 		}
 		Console.WriteLine("\nAll XML Files updated successfully!\n\nPress any key to exit...");

@@ -54,4 +54,10 @@ public class StationeersFileEditor
 		//if (openFile == "advancedfurnace" || openFile == "furnace")
 		Console.WriteLine($@"{openFile}: {change}");
 	}
+
+	public bool ElementExists(string elementName)
+	{
+		XmlNodeList nodes = xmlDoc.GetElementsByTagName(elementName);
+		return nodes.Count > 0;
+	}
 }
