@@ -2,32 +2,40 @@
 
 public class StationeersFileEditor
 {
-	public const string dataDir = @$"\rocketstation_Data\StreamingAssets\Data";
+	public const string defaultDataDir = @$"\rocketstation_Data\StreamingAssets\Data";
 
 	public string gameDir;
-	public readonly string FileSourceDir;
-	public readonly string FileDestinationDir;
+
+	public string DataDir
+	{
+		get
+		{
+			return @$"{gameDir}{defaultDataDir}";
+		}
+	}
+
+	public string BackupDir
+	{
+		get
+		{
+			return $@"{gameDir}\rocketstation_Data\StreamingAssets\DATA_ORIGINAL";
+		}
+	}
 
 	public XmlDocument xmlDoc = new();
 	private XmlNodeList? selectedNodes;
 
-	public string[] XmlFiles
-	{ get { return Directory.GetFiles(FileSourceDir); } }
-
-	public string? openFile = null;
-	//public string[] whiteList = Array.Empty<string>();
+	public string? OpenFile;
 
 	public StationeersFileEditor(string gamedir)
 	{
 		gameDir = gamedir;
-		FileSourceDir = @$"{gameDir}{dataDir}";
-		FileDestinationDir = FileSourceDir;
 	}
 
 	public bool IsWhitelisted(string[] whitelist)
 	{
-		if (openFile == null) throw new NullReferenceException("No file opened.");
-		return whitelist.Contains(openFile);
+		if (OpenFile == null) throw new NullReferenceException("No file opened.");
+		return whitelist.Contains(OpenFile);
 	}
 
 	public XmlNodeList? SelectNodes(string selector)
@@ -37,27 +45,54 @@ public class StationeersFileEditor
 		return selectedNodes;
 	}
 
-	public void Load(string fileName)
+	public void LoadFile(string filePath)
 	{
-		openFile = Path.GetFileNameWithoutExtension(fileName); ;
-		xmlDoc.Load(fileName);
+		xmlDoc.Load(filePath);
+		OpenFile = Path.GetFileNameWithoutExtension(filePath);
 	}
 
 	public void SaveFile()
 	{
-		xmlDoc.Save($@"{FileDestinationDir}\{openFile}.xml");
-		openFile = null;
+		xmlDoc.Save($@"{DataDir}\{OpenFile}.xml");
+		OpenFile = null;
 	}
 
 	public void LogChange(string change)
 	{
-		//if (openFile == "advancedfurnace" || openFile == "furnace")
-		Console.WriteLine($@"{openFile}: {change}");
+		//if (OpenFile == "advancedfurnace" || OpenFile == "furnace")
+		Console.WriteLine($@"{OpenFile}.xml: {change}");
 	}
 
 	public bool ElementExists(string elementName)
 	{
 		XmlNodeList nodes = xmlDoc.GetElementsByTagName(elementName);
 		return nodes.Count > 0;
+	}
+
+	public void BackupOriginalFiles()
+	{
+		if (!Directory.Exists(BackupDir))
+		{
+			Directory.CreateDirectory(BackupDir);
+			Console.WriteLine(@"Backup path doesn't exist, creating one now");
+		}
+		Console.WriteLine("Backing up original files...");
+		int i = 0;
+		foreach (string filePath in Directory.GetFiles(DataDir))
+		{
+			LoadFile(filePath);
+			if (!ElementExists("stationeers_edited"))
+			{
+				xmlDoc.Save($@"{BackupDir}\{OpenFile}.xml");
+				LogChange("Backed up");
+				OpenFile = null;
+				i++;
+			}
+			else
+			{
+				LogChange("Not original, skipping...");
+			}
+		}
+		Console.WriteLine($"{i} original files have been backed up.\n");
 	}
 }

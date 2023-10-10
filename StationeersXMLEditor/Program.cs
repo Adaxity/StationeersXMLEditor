@@ -1,8 +1,5 @@
-﻿using System.Diagnostics;
-using System.Globalization;
+﻿using System.Globalization;
 using System.Xml;
-using Microsoft.Win32;
-using System;
 
 internal partial class Program
 {
@@ -11,58 +8,25 @@ internal partial class Program
 
 	private static void Main(string[]? args)
 	{
-		string[] passedArgs = new string[1];
-		if (args.Length == 0)
-			passedArgs[0] = string.Empty;
-		else
-			passedArgs[0] = args[0].Trim();
+		editor = new(GetGameDir(new[] { "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Stationeers" }));
 
-		if (Directory.Exists($@"{passedArgs[0]}{StationeersFileEditor.dataDir}"))
+		editor.BackupOriginalFiles();
+
+		foreach (string filePath in Directory.GetFiles(editor.BackupDir))
 		{
-			Console.WriteLine($"\nPath argument passed, Stationeers found in {passedArgs[0]}");
-		} else
-		{
-			Console.WriteLine("No arguments passed, trying to automatically find Stationeers path...");
-			string? StationeersDirectory = FindExecutablePath("C:", "rocketstation.exe");
-			if (string.IsNullOrEmpty(StationeersDirectory))
-			{
-				StationeersDirectory = FindExecutablePath("D:", "rocketstation.exe");
-			}
-			if (Directory.Exists($@"{StationeersDirectory}{StationeersFileEditor.dataDir}")) {
-				Console.WriteLine($"\nStationeers was found automatically in {StationeersDirectory}");
-				gameDir = StationeersDirectory;
-			} else
-			{
-				Console.WriteLine("\nCouldn't automatically find Stationeers folder.");
-				while (!Directory.Exists($@"{gameDir}{StationeersFileEditor.dataDir}"))
-					try
-					{
-						Console.WriteLine("\nPlease enter your valid Stationeers folder path:");
-						gameDir = Console.ReadLine();
-					}
-					catch {
-						Console.WriteLine("\nAn error has occurred xd");
-					}
-			}
-		}
-
-		Console.WriteLine("\n");
-
-		editor = new(gameDir);
-
-		foreach (string filePath in editor.XmlFiles)
-		{
-			editor.Load(filePath);
+			Console.WriteLine($"\nLoading {filePath} ...");
+			editor.LoadFile(filePath);
 
 			if (editor.ElementExists("stationeers_edited"))
 			{
-				Console.WriteLine($"{editor.openFile} has already been edited, skipping");
+				Console.WriteLine($"{editor.OpenFile} has already been edited, skipping");
 				continue;
-			} else
+			}
+			else
 			{
 				XmlElement newElement = editor.xmlDoc.CreateElement("stationeers_edited");
 				editor.xmlDoc.DocumentElement.PrependChild(newElement);
-				Console.WriteLine($"Adding <stationeers_edited> tag to {editor.openFile}");
+				Console.WriteLine($"Adding <stationeers_edited> tag to {editor.OpenFile}");
 			}
 
 			// Assemblers changes
@@ -191,7 +155,7 @@ internal partial class Program
 					editor.LogChange($"Set values of {parentName} to 0");
 				}
 			}
-			
+
 			editor.SaveFile();
 		}
 		Console.WriteLine("\nAll XML Files updated successfully!\n\nPress any key to exit...");
